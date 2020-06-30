@@ -1,0 +1,30 @@
+{
+  "name": "m5-d7",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yvette809/m5-D7.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/yvette809/m5-D7/issues"
+  },
+  "homepage": "https://github.com/yvette809/m5-D7#readme",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "express-validator": "^6.6.0",
+    "fs-extra": "^9.0.1",
+    "multer": "^1.4.2",
+    "uniqid": "^5.2.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.4"
+  }
+}
