@@ -5,6 +5,7 @@ const { join } = require("path")
 const helmet = require("helmet")
 
 const booksRouter = require("./src/services/books")
+const commentsRouter= require("./src/services/comments")
 const {
   notFoundHandler,
   badRequestHandler,
@@ -37,10 +38,12 @@ const corsOptions = {
 
 server.use(cors(corsOptions))
 
+
 server.use(helmet())
 
 //ROUTES
 server.use("/books", booksRouter)
+server.use("/comments",commentsRouter)
 
 // ERROR HANDLERS
 server.use(badRequestHandler)

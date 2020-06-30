@@ -4,13 +4,29 @@ const { check, validationResult, sanitizeBody } = require("express-validator")
 const fs = require("fs-extra")
 const multer = require("multer")
 const { join } = require("path")
-const { readDB, writeDB } = require("./utilities")
+const uniqid = require("uniqid")
+const { readDB, writeDB } = require("../../../src/utilities")
 
 const booksJsonPath = path.join(__dirname, "books.json")
+const commentsFilePath = path.join(__dirname, "../comments/comments.json")
 
 const booksFolder = join(__dirname, "../../../public/img/books/")
 const upload = multer({})
 const booksRouter = express.Router()
+
+const getBooks = ()=>{
+    const booksBuffer = fs.readFileSync(booksJsonPath)
+    const booksString = booksBuffer.toString()
+    const books = JSON.parse(booksString)
+    return books
+}
+
+const getComments = ()=>{
+  const commentsBuffer = fs.readFileSync(commentsFilePath)
+  const commentsString = commentsBuffer.toString()
+  const comments = JSON.parse(commentsString)
+  return comments
+}
 
 booksRouter.get("/", async (req, res, next) => {
   try {
@@ -121,8 +137,8 @@ booksRouter.delete("/:asin", async (req, res, next) => {
 booksRouter.post("/upload", upload.single("avatar"), async (req, res, next) => {
   try {
     await fs.writeFile(
-      join(booksFolder, req.file.originalname),
-      req.file.buffer
+      join(booksFolder, req.file.originalname), // path where I want to save file
+      req.file.buffer // the file
     )
   } catch (error) {
     next(error)
@@ -130,4 +146,83 @@ booksRouter.post("/upload", upload.single("avatar"), async (req, res, next) => {
   res.send("OK")
 })
 
+// create comments on a particular book
+
+booksRouter.get("/:asin/comments", (req,res,next) =>{
+  try{
+      const comments = getComments()
+      const filteredComments = comments.filter(comment=> comment._id === req.params.asin)
+      if(filteredComments){
+          res.send(filteredComments)
+      }else{
+          const error = new Error ("while getting comments, a prob occured")
+          error.httpStatusCode = 404
+          next(error)
+      }
+  }catch(error){
+   next(error)
+
+  }
+
+})
+
+//
+// const validation =  [
+//   check("_id").exists().withMessage("You should specify the _id"),
+//   check("comment").exists().withMessage("comment is required"),
+//   sanitizeBody("rate").toInt()
+// ]
+booksRouter.post("/:asin/comments", (req,res,next)=>{
+  const errors = validationResult(req)
+  if(!errors.isEmpty()){
+      const error = new(Error)
+      error.httpStatusCode =400
+      error.message = errors
+      next(error)
+  }else{
+      try{
+          const  newComment = {...req.body, _id:uniqid()}
+          const comments = getComments()
+          
+          comments.push(newComment)
+          fs.writeFileSync(commentsFilePath, JSON.stringify(comments))
+          const books = getBooks()
+          const selectedBook = books.find(book => book.asin=== newComment._id)
+          selectedBook.comment +=1
+          console.log("the selected b is", selectedBook)
+          const filteredBooks = books.filter(book => book.id!== newComment._id)
+          filteredBooks.push(selectedBook)
+          fs.writeFileSync(booksFilePath, JSON.stringify(filteredBooks))
+          res.status(201).send(newComment)
+          
+      }catch(error){
+          next(error)
+      }
+  }
+  
+  
+})
+
+// delete a specific comment
+booksRouter.delete("/:asin/comments", (req,res,next)=>{
+  const books = getBooks()
+  const bookIndex = books.map(b => b.asin).indexOf(req.params.asin)
+  if(bookIndex === 2){
+    try{
+      const comments = getComments()
+      comments.find(comment => comment._id === bookIndex)
+      fs.writeFileSync(booksJsonPath, books.filter(book => book.asin !== req.params .id))
+      res.send("deleted")
+    }catch(error){
+      next(error)
+    }
+  }else{
+    const error = new Error("we didn't delete the book with the specidied comment")
+    error.httpStatusCode = 404
+    next(error)
+  }
+  
+  
+
+})
 module.exports = booksRouter
