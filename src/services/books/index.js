@@ -166,12 +166,12 @@ booksRouter.get("/:asin/comments", (req,res,next) =>{
 
 })
 
-//
-// const validation =  [
-//   check("_id").exists().withMessage("You should specify the _id"),
-//   check("comment").exists().withMessage("comment is required"),
-//   sanitizeBody("rate").toInt()
-// ]
+
+const validation =  [
+  check("_id").exists().withMessage("You should specify the _id"),
+  check("comment").exists().withMessage("comment is required"),
+  sanitizeBody("rate").toInt()
+]
 booksRouter.post("/:asin/comments", (req,res,next)=>{
   const errors = validationResult(req)
   if(!errors.isEmpty()){
@@ -181,20 +181,14 @@ booksRouter.post("/:asin/comments", (req,res,next)=>{
       next(error)
   }else{
       try{
-          const  newComment = {...req.body, _id:uniqid()}
+          
           const comments = getComments()
+          const  newComment = {...req.body, _id:uniqid(), date:new Date()}
           
           comments.push(newComment)
           fs.writeFileSync(commentsFilePath, JSON.stringify(comments))
-          const books = getBooks()
-          const selectedBook = books.find(book => book.asin=== newComment._id)
-          selectedBook.comment +=1
-          console.log("the selected b is", selectedBook)
-          const filteredBooks = books.filter(book => book.id!== newComment._id)
-          filteredBooks.push(selectedBook)
-          fs.writeFileSync(booksFilePath, JSON.stringify(filteredBooks))
-          res.status(201).send(newComment)
-          
+          res.status(201).send("new comment was added")
+            
       }catch(error){
           next(error)
       }
@@ -205,24 +199,31 @@ booksRouter.post("/:asin/comments", (req,res,next)=>{
 
 // delete a specific comment
 booksRouter.delete("/:asin/comments", (req,res,next)=>{
-  const books = getBooks()
-  const bookIndex = books.map(b => b.asin).indexOf(req.params.asin)
-  if(bookIndex === 2){
+  // const books = getBooks()
+  // const bookIndex = books.map(b => b.asin).indexOf(req.params.asin)
+  // if(bookIndex === 2){
     try{
       const comments = getComments()
-      comments.find(comment => comment._id === bookIndex)
-      fs.writeFileSync(booksJsonPath, books.filter(book => book.asin !== req.params .id))
-      res.send("deleted")
+      const findComment= comments.find(comment => comment._id === req.params.id)
+      if(findComment){
+        fs.writeFileSync(commentsFilePath, comments.filter(comment=> comment._id !== req.params.id))
+        res.status(200).send("Deleted")
+      }else{
+        const error = new Error()
+        error.httpStatusCode= 404
+        next(error)
+      }
+      
     }catch(error){
       next(error)
     }
-  }else{
-    const error = new Error("we didn't delete the book with the specidied comment")
-    error.httpStatusCode = 404
-    next(error)
-  }
+  // }else{
+  //   const error = new Error("we didn't delete the book with the specidied comment")
+  //   error.httpStatusCode = 404
+  //   next(error)
+  // }
   
-  
+
 
 })
 module.exports = booksRouter
