@@ -181,14 +181,20 @@ booksRouter.post("/:asin/comments", (req,res,next)=>{
       next(error)
   }else{
       try{
-          
+         const books = getBooks()
+         const book = books.find(book => book.asin === req.params.asin)
+         if (book){
           const comments = getComments()
-          const  newComment = {...req.body, _id:uniqid(), date:new Date()}
-          
+          const  newComment = {...req.body, BookID:req.params.asin, date:new Date()}
           comments.push(newComment)
           fs.writeFileSync(commentsFilePath, JSON.stringify(comments))
           res.status(201).send("new comment was added")
-            
+         }else{
+           const error = new Error(`Book with asin ${req.params.asin} not found`)
+           error.httpStatusCode = 404
+           next(error)
+         }
+               
       }catch(error){
           next(error)
       }
