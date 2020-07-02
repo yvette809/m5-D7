@@ -1,0 +1,65 @@
+openapi: 3.0.1
+info:
+  title: AmazonBooks API
+  description: AmazonBooks API
+  version: 1.0.0
+servers:
+   -url:http://localhost:3000
+    description:local server
+   -url:https://hosted.on.herokuapp.com
+    description:cloud server
+tags:
+   -name:books
+    description:Endpoints related to books
+   -name:files
+    description:Endpoints related to files
+paths:
+  /books:
+    get:
+      tags:
+       -books
+      summary: Returns a list of books
+      description:Extended description of GET/books route
+      parameters:
+        -in:query
+        name:category
+        -in:query
+        name:title
+        schema:
+          type:string
+        description:Filter books by title
+      responses:
+        "202":
+          description: A list of books
+        "404":
+          description: A not found error
+      post:
+        tags:
+          -books
+        summary:Adds new books
+        description: Extended description of the post
+        content:
+          application/json:
+          schema:
+  components:
+     schema:
+       Book:
+        type:object
+       properties:
+       asin:
+       type:string
+       title:
+       type:string
+       price:
+        type:number
+       category:
+       type:string
+       img:
+       type:string
+
+     post:
+       tags:
+       -books
+       summary: Returns a list of books
+       description:Extended description of GET/books route
+   
